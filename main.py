@@ -33,19 +33,24 @@ if "question_history" not in st.session_state:
   st.session_state["question_history"] = []
 if "answer_history" not in st.session_state:
   st.session_state["answer_history"] = []
+if "chat_history" not in st.session_state:
+  st.session_state["chat_history"] = []
 if "qa_history" not in st.session_state:
   st.session_state["qa_history"] = []
 
 # ANSWER THE QUESTION
 if question:
   with st.spinner("Let me ponder that..."):
-    generated_response = run_llm(query=question)
+    generated_response = run_llm(
+      query=question,
+      chat_history=st.session_state["chat_history"]
+    )
     sources = set(
       [doc.metadata["source"] for doc in
        generated_response["source_documents"]]
     )
 
-    answer = f"{generated_response['result']}\n\n{create_sources_string(sources)}"
+    answer = f"{generated_response['answer']}\n\n{create_sources_string(sources)}"
 
     st.session_state["question_history"].append(question)
     st.session_state["answer_history"].append(answer)
@@ -53,12 +58,10 @@ if question:
       {
         "question": question,
         "answer": answer,
-        "sources": sources,
-        "key": time.time()
+        "key": time.time(),
       }
     )
-
-    question = ""
+    st.session_state["chat_history"].append((question, answer))
 
 # PRINT THE LIST
 if st.session_state["qa_history"]:
